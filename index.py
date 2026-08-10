@@ -14,7 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-GZ_DATASET_PATH = os.path.join(os.path.dirname(__file__), "data", "data.csv.gz")
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 class ConsumerRequest(BaseModel):
     CONS_NO: str = "CONS_1001"
@@ -20449,43 +20449,49 @@ TYPES = ["Residential", "Commercial", "Industrial", "Agricultural"]
 
 
 def search_gz_dataset(cons_str: str):
-    if not os.path.exists(GZ_DATASET_PATH):
+    if not os.path.exists(DATA_DIR):
         return None
-    try:
-        with gzip.open(GZ_DATASET_PATH, "rt", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if str(row.get("CONS_NO", "")).strip() == cons_str:
-                    avg_u = round(float(row.get("Avg_Consumption", 18.5) or 18.5), 1)
-                    zero_d = min(int(float(row.get("Zero_Consumption_Days", 0) or 0)), 30)
-                    drop_d = min(int(float(row.get("Sudden_Drop_Days", 0) or 0)), 15)
-                    anom_s = round(float(row.get("Behavioural_Anomaly_Score", 0.5) or 0.5), 2)
-                    theft_f = int(float(row.get("Theft_Flag", 0) or 0))
-                    
-                    # Ensure locality & type look clean
-                    loc_val = row.get("Locality", "KOLKATA_EAST")
-                    if loc_val == "Unknown" or not loc_val:
-                        loc_val = "KOLKATA_EAST"
-                    
-                    return {
-                        "CONS_NO": cons_str,
-                        "Locality": loc_val,
-                        "City": row.get("City", "Kolkata"),
-                        "State": row.get("State", "West Bengal"),
-                        "Urban_Rural": row.get("Urban_Rural", "Urban"),
-                        "Consumer_Type": row.get("Consumer_Type", "Residential"),
-                        "Avg_Consumption": avg_u,
-                        "Median_Consumption": round(avg_u * 0.9, 1),
-                        "Max_Consumption": round(avg_u * 3.2, 1),
-                        "Min_Consumption": 0.0 if zero_d > 0 else round(avg_u * 0.2, 1),
-                        "Std_Consumption": round(avg_u * 0.4, 1),
-                        "Zero_Consumption_Days": zero_d,
-                        "Sudden_Drop_Days": drop_d,
-                        "Behavioural_Anomaly_Score": anom_s,
-                        "Theft_Flag": theft_f
-                    }
-    except Exception:
-        pass
+
+    # Search across part1.csv.gz, part2.csv.gz, part3.csv.gz, part4.csv.gz, data.csv.gz
+    part_files = [f for f in os.listdir(DATA_DIR) if f.endswith(".csv.gz")]
+    part_files.sort()
+
+    for fn in part_files:
+        fp = os.path.join(DATA_DIR, fn)
+        try:
+            with gzip.open(fp, "rt", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if str(row.get("CONS_NO", "")).strip() == cons_str:
+                        avg_u = round(float(row.get("Avg_Consumption", 18.5) or 18.5), 1)
+                        zero_d = min(int(float(row.get("Zero_Consumption_Days", 0) or 0)), 30)
+                        drop_d = min(int(float(row.get("Sudden_Drop_Days", 0) or 0)), 15)
+                        anom_s = round(float(row.get("Behavioural_Anomaly_Score", 0.5) or 0.5), 2)
+                        theft_f = int(float(row.get("Theft_Flag", 0) or 0))
+                        
+                        loc_val = row.get("Locality", "KOLKATA_EAST")
+                        if loc_val == "Unknown" or not loc_val:
+                            loc_val = "KOLKATA_EAST"
+                        
+                        return {
+                            "CONS_NO": cons_str,
+                            "Locality": loc_val,
+                            "City": row.get("City", "Kolkata"),
+                            "State": row.get("State", "West Bengal"),
+                            "Urban_Rural": row.get("Urban_Rural", "Urban"),
+                            "Consumer_Type": row.get("Consumer_Type", "Residential"),
+                            "Avg_Consumption": avg_u,
+                            "Median_Consumption": round(avg_u * 0.9, 1),
+                            "Max_Consumption": round(avg_u * 3.2, 1),
+                            "Min_Consumption": 0.0 if zero_d > 0 else round(avg_u * 0.2, 1),
+                            "Std_Consumption": round(avg_u * 0.4, 1),
+                            "Zero_Consumption_Days": zero_d,
+                            "Sudden_Drop_Days": drop_d,
+                            "Behavioural_Anomaly_Score": anom_s,
+                            "Theft_Flag": theft_f
+                        }
+        except Exception:
+            pass
     return None
 
 
@@ -20494,7 +20500,6 @@ def get_consumer_record(cons_str: str):
     if cons_str in SAMPLE_DATABASE:
         return SAMPLE_DATABASE[cons_str]
 
-    # Try streaming from compressed dataset file if available
     gz_rec = search_gz_dataset(cons_str)
     if gz_rec:
         return gz_rec
