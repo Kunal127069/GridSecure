@@ -135,6 +135,18 @@
           </div>
 
           <div class="map-side-column">
+            <div class="panel-card mb-12">
+              <h3 class="panel-title mb-8">42,372 Meter Hotspot Density</h3>
+              <div class="model-select-card" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 8px;">GEOSPATIAL RISK OVERLAY</label>
+                <select id="mapOverlaySelect" class="form-select" onchange="switchMapOverlay(this.value)">
+                  <option value="hotspot_substations" selected>📍 Substation Grid Nodes (5 Regions)</option>
+                  <option value="heatmap_all">🔥 Heatmap: All 42,372 Smart Meters</option>
+                  <option value="hotspot_critical">🔴 Theft Hotspots: Critical Cases (3,615)</option>
+                </select>
+              </div>
+            </div>
+
             <div class="panel-card">
               <h3 class="panel-title mb-12">Regional Substation Status</h3>
               <div class="substation-list" id="zoneListContainer">
@@ -425,6 +437,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
