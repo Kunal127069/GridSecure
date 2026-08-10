@@ -1,7 +1,7 @@
 {
   "builds": [
     {
-      "src": "api/index.py",
+      "src": "index.py",
       "use": "@vercel/python"
     },
     {
@@ -12,35 +12,35 @@
   "routes": [
     {
       "src": "/health",
-      "dest": "api/index.py"
+      "dest": "index.py"
     },
     {
       "src": "/analytics",
-      "dest": "api/index.py"
+      "dest": "index.py"
     },
     {
       "src": "/metrics",
-      "dest": "api/index.py"
+      "dest": "index.py"
     },
     {
       "src": "/sample-consumers",
-      "dest": "api/index.py"
+      "dest": "index.py"
     },
     {
       "src": "/consumer/(.*)",
-      "dest": "api/index.py"
+      "dest": "index.py"
     },
     {
       "src": "/predict",
-      "dest": "api/index.py"
+      "dest": "index.py"
     },
     {
       "src": "/docs",
-      "dest": "api/index.py"
+      "dest": "index.py"
     },
     {
       "src": "/openapi.json",
-      "dest": "api/index.py"
+      "dest": "index.py"
     },
     {
       "src": "/(.*)",
