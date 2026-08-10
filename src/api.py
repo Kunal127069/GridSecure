@@ -1,9 +1,10 @@
 import io
 import pandas as pd
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi import FastAPI, HTTPException, File, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from typing import Optional
 
 from src.data_utils import load_dataset, get_consumer_by_id
 from src.inference import TheftInferenceEngine
@@ -64,6 +65,7 @@ class ConsumerRequest(BaseModel):
     Long_Term_Change_Percentage: float = -65.7
     Behavioural_Anomaly_Score: float = 0.72
     Behaviour_Cluster: int = 1
+    model_name: Optional[str] = "Random Forest"
 
 
 @app.get("/")
@@ -73,26 +75,31 @@ def home():
 
 @app.get("/health")
 def health():
-    ready = inference_engine is not None and inference_engine.model is not None
-    return {"status": "healthy" if ready else "degraded", "model_ready": ready}
+    ready = inference_engine is not None and bool(inference_engine.models)
+    available_models = list(inference_engine.models.keys()) if ready else []
+    return {
+        "status": "healthy" if ready else "degraded",
+        "model_ready": ready,
+        "available_models": available_models
+    }
 
 
 @app.post("/predict")
 def predict(request: ConsumerRequest):
-    if inference_engine is None or inference_engine.model is None:
+    if inference_engine is None or not inference_engine.models:
         raise HTTPException(status_code=503, detail="Inference engine is not ready.")
-    return inference_engine.predict_single(request.dict())
+    return inference_engine.predict_single(request.dict(), model_name=request.model_name)
 
 
 @app.get("/consumer/{consumer_id}")
-def get_consumer(consumer_id: str):
+def get_consumer(consumer_id: str, model_name: Optional[str] = Query("Random Forest")):
     if cached_df is None:
         raise HTTPException(status_code=503, detail="Dataset is not loaded.")
     record = get_consumer_by_id(consumer_id, cached_df)
     if record is None:
-        raise HTTPException(status_code=404, detail="Consumer not found.")
+        raise HTTPException(status_code=404, detail=f"Consumer '{consumer_id}' not found.")
     
-    pred = inference_engine.predict_single(record) if inference_engine and inference_engine.model else None
+    pred = inference_engine.predict_single(record, model_name=model_name) if inference_engine and inference_engine.models else None
     return {"consumer_profile": record, "prediction": pred}
 
 

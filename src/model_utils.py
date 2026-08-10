@@ -22,9 +22,9 @@ from src.features import FeaturePipelineTransformer
 
 def get_models():
     return {
-        "Logistic Regression": LogisticRegression(max_iter=1000, random_state=RANDOM_STATE, class_weight='balanced'),
+        "Random Forest": RandomForestClassifier(n_estimators=100, max_depth=12, random_state=RANDOM_STATE, class_weight='balanced', n_jobs=-1),
         "Decision Tree": DecisionTreeClassifier(max_depth=7, min_samples_split=10, random_state=RANDOM_STATE, class_weight='balanced'),
-        "Random Forest": RandomForestClassifier(n_estimators=100, max_depth=12, random_state=RANDOM_STATE, class_weight='balanced', n_jobs=-1)
+        "Logistic Regression": LogisticRegression(max_iter=1000, random_state=RANDOM_STATE, class_weight='balanced')
     }
 
 
@@ -65,15 +65,26 @@ def train_and_evaluate_all(X, y):
     return comparison_df, fitted_models, transformer, best_model, test_eval_data
 
 
-def save_pipeline_and_model(model, transformer, model_name):
+def save_pipeline_and_model(models, transformer, best_model_name):
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
     BEST_MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    bundle = {"model": model, "transformer": transformer, "model_name": model_name}
+    if isinstance(models, dict):
+        fitted_dict = models
+        best_model = models.get(best_model_name, list(models.values())[0])
+    else:
+        fitted_dict = {best_model_name: models}
+        best_model = models
+
+    bundle = {
+        "models": fitted_dict,
+        "best_model_name": best_model_name,
+        "transformer": transformer
+    }
     joblib.dump(bundle, PIPELINE_PATH)
 
     with open(BEST_MODEL_PATH, "wb") as f:
-        pickle.dump(model, f)
+        pickle.dump(best_model, f)
 
     return PIPELINE_PATH, BEST_MODEL_PATH
 
@@ -81,11 +92,15 @@ def save_pipeline_and_model(model, transformer, model_name):
 def load_pipeline_and_model():
     if PIPELINE_PATH.exists():
         bundle = joblib.load(PIPELINE_PATH)
-        return bundle["model"], bundle["transformer"]
-    elif BEST_MODEL_PATH.exists():
+        if "models" in bundle:
+            return bundle["models"], bundle["transformer"], bundle.get("best_model_name", "Random Forest")
+        elif "model" in bundle:
+            name = bundle.get("model_name", "Random Forest")
+            return {name: bundle["model"]}, bundle["transformer"], name
+    if BEST_MODEL_PATH.exists():
         with open(BEST_MODEL_PATH, "rb") as f:
             model = pickle.load(f)
-        return model, FeaturePipelineTransformer()
+        return {"Random Forest": model}, FeaturePipelineTransformer(), "Random Forest"
     raise FileNotFoundError("Model file not found.")
 
 
@@ -93,7 +108,6 @@ def generate_evaluation_visualizations(results_df, test_eval_data, feature_names
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
     y_test = test_eval_data["y_test"]
 
-    # Confusion matrix plot
     fig, axes = plt.subplots(1, len(test_eval_data["predictions"]), figsize=(15, 4))
     for idx, (name, y_pred) in enumerate(test_eval_data["predictions"].items()):
         cm = confusion_matrix(y_test, y_pred)
@@ -105,7 +119,6 @@ def generate_evaluation_visualizations(results_df, test_eval_data, feature_names
     plt.savefig(DOCS_DIR / "confusion_matrices.png", dpi=300)
     plt.close()
 
-    # ROC curves plot
     plt.figure(figsize=(8, 6))
     for name, y_prob in test_eval_data["probabilities"].items():
         fpr, tpr, _ = roc_curve(y_test, y_prob)
@@ -119,7 +132,6 @@ def generate_evaluation_visualizations(results_df, test_eval_data, feature_names
     plt.savefig(DOCS_DIR / "roc_curves.png", dpi=300)
     plt.close()
 
-    # Feature importance plot
     if hasattr(best_model, "feature_importances_"):
         importances = pd.Series(best_model.feature_importances_, index=feature_names).sort_values(ascending=False).head(15)
         plt.figure(figsize=(10, 6))

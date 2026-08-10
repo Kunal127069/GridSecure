@@ -38,7 +38,7 @@ def main():
     print("==========================================================================")
     
     comp_df.to_csv(MODEL_COMPARISON_PATH)
-    save_pipeline_and_model(best_model, transformer, "Random Forest")
+    save_pipeline_and_model(fitted_models, transformer, "Random Forest")
     generate_evaluation_visualizations(comp_df, test_eval_data, transformer.feature_names, best_model)
     print("      Saved best model to 'models/gridsecure_best_model.pkl' and plots to 'docs/'")
 
