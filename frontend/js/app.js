@@ -518,11 +518,11 @@ function renderConsumerProfileView(profile, pred) {
   const wrapper = document.getElementById('investigationDetails');
   if (!wrapper) return;
 
-  const isTheft = pred ? pred.is_theft_predicted === 1 : profile.Zero_Consumption_Days > 10;
-  const riskLevel = pred ? pred.risk_level : (isTheft ? 'HIGH' : 'LOW');
-  const probPct = pred ? pred.theft_risk_percentage : (isTheft ? 78.0 : 4.1);
-  const modelUsed = pred ? pred.model_used : state.selectedModel;
-  const reasons = pred ? pred.risk_factors : ['Zero consumption days exceed baseline threshold.'];
+  const isTheft = pred ? (pred.prediction === 1 || pred.is_theft_predicted === 1 || pred.risk_level === 'CRITICAL' || pred.risk_level === 'HIGH') : profile.Zero_Consumption_Days > 10;
+  const riskLevel = pred ? (pred.risk_level || 'LOW') : (isTheft ? 'HIGH' : 'LOW');
+  const probPct = pred ? (pred.theft_risk_percentage !== undefined ? pred.theft_risk_percentage : Math.round((pred.probability || 0.78) * 100)) : (isTheft ? 78.0 : 4.1);
+  const modelUsed = pred ? (pred.model_name || pred.model_used || state.selectedModel || 'Random Forest') : (state.selectedModel || 'Random Forest');
+  const reasons = (pred && (pred.reasons || pred.risk_factors)) ? (pred.reasons || pred.risk_factors) : ['Zero consumption days exceed baseline threshold.'];
 
   wrapper.innerHTML = `
     <div class="profile-header-card">
