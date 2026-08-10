@@ -3,7 +3,9 @@
  * Robust FastAPI Backend Integration, Explicit UX States, Multi-Model Selection
  */
 
-const API_BASE_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') ? 'http://127.0.0.1:8000' : window.location.origin;
+const API_BASE_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+  ? 'http://127.0.0.1:8000'
+  : window.location.origin;
 
 const state = {
   activeTab: 'map',
@@ -230,6 +232,7 @@ function resetMapView() {
 async function checkAPIHealth() {
   const statusDot = document.getElementById('statusDot');
   const statusText = document.getElementById('statusText');
+  const endpointText = document.getElementById('endpointText');
 
   try {
     const res = await fetch(`${API_BASE_URL}/health`);
@@ -238,6 +241,7 @@ async function checkAPIHealth() {
       state.apiConnected = data.model_ready;
       if (statusDot) statusDot.className = 'status-dot green';
       if (statusText) statusText.textContent = 'API ONLINE';
+      if (endpointText) endpointText.textContent = 'ENDPOINT: ' + (window.location.hostname || 'CLOUD API');
       fetchAnalyticsData();
       fetchMetricsData();
       renderOverviewQueue();
@@ -248,6 +252,7 @@ async function checkAPIHealth() {
     state.apiConnected = false;
     if (statusDot) statusDot.className = 'status-dot red';
     if (statusText) statusText.textContent = 'API OFFLINE';
+    if (endpointText) endpointText.textContent = 'ENDPOINT: OFFLINE';
     renderOverviewQueueFallback();
   }
 }
