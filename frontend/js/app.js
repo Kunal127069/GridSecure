@@ -590,6 +590,21 @@ function openTheftReportModal(consumerId) {
   const body = document.getElementById('printableReportBody');
   if (!modal || !body) return;
 
+  state.auditedConsumers = state.auditedConsumers || new Set();
+  if (!state.auditedConsumers.has(consumerId)) {
+    state.auditedConsumers.add(consumerId);
+    const countEl = document.getElementById('statTheftCases');
+    const mapCountEl = document.getElementById('mapFlaggedCount');
+    if (countEl) {
+      const cur = parseInt(countEl.textContent.replace(/,/g, ''), 10) || 3615;
+      countEl.textContent = (cur - 1).toLocaleString();
+    }
+    if (mapCountEl) {
+      const curMap = parseInt(mapCountEl.textContent.replace(/,/g, ''), 10) || 3615;
+      mapCountEl.textContent = (curMap - 1).toLocaleString();
+    }
+  }
+
   const current = state.currentProfileData && state.currentProfileData.profile.CONS_NO === consumerId ? state.currentProfileData : null;
   const profile = current ? current.profile : {
     CONS_NO: consumerId,
