@@ -3,7 +3,7 @@
  * Robust FastAPI Backend Integration, Explicit UX States, Multi-Model Selection
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') ? 'http://127.0.0.1:8000' : window.location.origin;
 
 const state = {
   activeTab: 'map',
