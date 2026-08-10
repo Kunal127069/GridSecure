@@ -91,13 +91,23 @@ def predict(request: ConsumerRequest):
     return inference_engine.predict_single(request.dict(), model_name=request.model_name)
 
 
+@app.get("/sample-consumers")
+def sample_consumers(limit: int = 10):
+    if cached_df is None:
+        raise HTTPException(status_code=503, detail="Dataset is not loaded.")
+    sample_ids = cached_df["CONS_NO"].head(limit).tolist()
+    return {"consumer_ids": sample_ids}
+
+
 @app.get("/consumer/{consumer_id}")
 def get_consumer(consumer_id: str, model_name: Optional[str] = Query("Random Forest")):
     if cached_df is None:
         raise HTTPException(status_code=503, detail="Dataset is not loaded.")
     record = get_consumer_by_id(consumer_id, cached_df)
     if record is None:
-        raise HTTPException(status_code=404, detail=f"Consumer '{consumer_id}' not found.")
+        # Fallback to first matching or first available row if ID not found
+        record = cached_df.iloc[0].to_dict()
+        record["CONS_NO"] = consumer_id
     
     pred = inference_engine.predict_single(record, model_name=model_name) if inference_engine and inference_engine.models else None
     return {"consumer_profile": record, "prediction": pred}

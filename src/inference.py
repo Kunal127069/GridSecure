@@ -76,7 +76,7 @@ class TheftInferenceEngine:
         return reasons
 
     def _get_top_feature_drivers(self, data, model, limit=4):
-        if not hasattr(model, "feature_importances_"):
+        if not hasattr(model, "feature_importances_") or self.transformer is None:
             return []
 
         importances = model.feature_importances_
@@ -84,7 +84,11 @@ class TheftInferenceEngine:
         scores = []
 
         for idx, feat in enumerate(feature_names):
-            val = float(data.get(feat, 0) or 0)
+            raw_val = data.get(feat, 0)
+            try:
+                val = float(raw_val or 0)
+            except (ValueError, TypeError):
+                continue
             stat = self._dataset_stats.get(feat, {})
             median = stat.get("median", 0.0)
             std = stat.get("std", 1.0) or 1.0
