@@ -346,7 +346,18 @@ async function renderOverviewQueue() {
   if (!tbody) return;
 
   let sampleIds = ['CONS_1001', 'CONS_1002', 'CONS_1003', 'CONS_DEMO_1001'];
-  
+  if (state.apiConnected) {
+    try {
+      const sRes = await fetch(`${API_BASE_URL}/sample-consumers?limit=8`);
+      if (sRes.ok) {
+        const sBody = await sRes.json();
+        if (sBody.consumer_ids && sBody.consumer_ids.length > 0) {
+          sampleIds = sBody.consumer_ids;
+        }
+      }
+    } catch(e) {}
+  }
+
   try {
     const rowsHTML = await Promise.all(sampleIds.map(async (id) => {
       let data = null;
