@@ -371,14 +371,16 @@ async function renderOverviewQueue() {
           const res = await fetch(`${API_BASE_URL}/consumer/${id}`);
           if (res.ok) {
             const body = await res.json();
+            const prof = body.consumer || body.consumer_profile || {};
+            const anal = body.analysis || body.prediction || {};
             data = {
               CONS_NO: id,
-              Locality: body.consumer_profile.Locality || 'KOLKATA_EAST',
-              Consumer_Type: body.consumer_profile.Consumer_Type || 'Residential',
-              Avg_Consumption: body.consumer_profile.Avg_Consumption || 18.5,
-              Zero_Consumption_Days: body.consumer_profile.Zero_Consumption_Days || 22,
-              Behavioural_Anomaly_Score: body.consumer_profile.Behavioural_Anomaly_Score || 0.78,
-              Risk_Level: body.prediction ? body.prediction.risk_level : 'HIGH'
+              Locality: prof.Locality || 'KOLKATA_EAST',
+              Consumer_Type: prof.Consumer_Type || 'Residential',
+              Avg_Consumption: prof.Avg_Consumption || 18.5,
+              Zero_Consumption_Days: prof.Zero_Consumption_Days !== undefined ? prof.Zero_Consumption_Days : 22,
+              Behavioural_Anomaly_Score: prof.Behavioural_Anomaly_Score !== undefined ? prof.Behavioural_Anomaly_Score : 0.78,
+              Risk_Level: anal.risk_level || anal.Risk_Level || 'HIGH'
             };
           }
         } catch(e) {}
@@ -461,8 +463,8 @@ async function executeInvestigation() {
       const res = await fetch(`${API_BASE_URL}/consumer/${consumerId}?model_name=${encodeURIComponent(state.selectedModel)}`);
       if (res.ok) {
         const body = await res.json();
-        profileData = body.consumer_profile;
-        predictionData = body.prediction;
+        profileData = body.consumer || body.consumer_profile;
+        predictionData = body.analysis || body.prediction;
       }
     }
 
