@@ -169,6 +169,71 @@ function renderFallbackSVGIndiaMap(container) {
   `;
 }
 
+function switchMapOverlay(mode) {
+  if (!state.map) return;
+
+  if (state.heatLayer) {
+    try {
+      state.map.removeLayer(state.heatLayer);
+    } catch(e) {}
+    state.heatLayer = null;
+  }
+
+  if (mode === 'heatmap_all' || mode === 'hotspot_critical') {
+    state.mapMarkers.forEach(m => {
+      try { m.getElement()?.style.setProperty('display', 'none'); } catch(e) {}
+    });
+  } else {
+    state.mapMarkers.forEach(m => {
+      try { m.getElement()?.style.setProperty('display', 'block'); } catch(e) {}
+    });
+  }
+
+  if (mode === 'hotspot_substations') {
+    return;
+  }
+
+  const points = [];
+  const centers = [
+    { lat: 22.5726, lng: 88.3639, count: 9420, weight: 0.95 },
+    { lat: 28.7041, lng: 77.1025, count: 11200, weight: 0.85 },
+    { lat: 23.2599, lng: 77.4126, count: 6810, weight: 0.65 },
+    { lat: 19.0760, lng: 72.8777, count: 8500, weight: 0.50 },
+    { lat: 12.9716, lng: 77.5946, count: 6442, weight: 0.25 }
+  ];
+
+  const isCriticalOnly = mode === 'hotspot_critical';
+
+  centers.forEach(c => {
+    const numPoints = isCriticalOnly ? 150 : 350;
+    for (let i = 0; i < numPoints; i++) {
+      const radius = isCriticalOnly ? (Math.random() * 0.45) : (Math.random() * 1.8);
+      const angle = Math.random() * 2 * Math.PI;
+      const lat = c.lat + radius * Math.cos(angle);
+      const lng = c.lng + radius * Math.sin(angle);
+      const intensity = isCriticalOnly ? c.weight : (c.weight * (0.3 + Math.random() * 0.7));
+      points.push([lat, lng, intensity]);
+    }
+  });
+
+  if (typeof L.heatLayer === 'function') {
+    const options = isCriticalOnly ? {
+      radius: 28,
+      blur: 18,
+      maxZoom: 12,
+      max: 1.0,
+      gradient: { 0.3: '#f59e0b', 0.7: '#ef4444', 1.0: '#b91c1c' }
+    } : {
+      radius: 20,
+      blur: 14,
+      maxZoom: 10,
+      max: 1.0,
+      gradient: { 0.2: '#10b981', 0.5: '#f59e0b', 0.85: '#ef4444' }
+    };
+    state.heatLayer = L.heatLayer(points, options).addTo(state.map);
+  }
+}
+
 function renderZoneList(filterType = 'all') {
   const container = document.getElementById('zoneListContainer');
   if (!container) return;
