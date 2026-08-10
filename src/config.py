@@ -6,6 +6,8 @@ MODELS_DIR = BASE_DIR / "models"
 DOCS_DIR = BASE_DIR / "docs"
 
 DATASET_PATH = DATA_DIR / "data.csv"
+REMOTE_DATASET_URL = "https://github.com/Kunal127069/GridSecure/releases/download/v1.0.0/electricity_theft_dataset_with_clusters_V2.csv"
+
 BEST_MODEL_PATH = MODELS_DIR / "gridsecure_best_model.pkl"
 PIPELINE_PATH = MODELS_DIR / "gridsecure_pipeline.joblib"
 MODEL_COMPARISON_PATH = DOCS_DIR / "Model_Comparison_Table.csv"
